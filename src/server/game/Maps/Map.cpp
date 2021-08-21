@@ -3345,15 +3345,6 @@ void Map::ProcessRespawns()
             if (!GetMapPoolMgr()->SpawnPool(next->poolId, 1))
                 TC_LOG_ERROR("maps.pool", "[Map %u] Unable to spawn object for pool %u.", GetId(), next->poolId);
 
-            auto bounds = _RespawnTimesByPoolId.equal_range(next->poolId);
-            for (auto itr = bounds.first; itr != bounds.second; ++itr)
-            {
-                if (itr->second == next)
-                {
-                    _RespawnTimesByPoolId.erase(itr);
-                    break;
-                }
-            }
             DeleteRespawnInfo(next);
         }
         else if (uint32 poolId = sPoolMgr->IsPartOfAPool(next->type, next->spawnId)) // is this part of a pool?
@@ -3369,6 +3360,7 @@ void Map::ProcessRespawns()
             sPoolMgr->UpdatePool(poolId, next->type, next->spawnId);
 
             // step 3: get rid of the actual entry
+            RemoveRespawnTime(next->type, next->spawnId, 0, nullptr, true);
             delete next;
         }
         else if (CheckRespawn(next)) // see if we're allowed to respawn
@@ -3385,14 +3377,14 @@ void Map::ProcessRespawns()
             DoRespawn(next->type, next->spawnId, next->gridId);
 
             // step 3: get rid of the actual entry
-            RemoveRespawnTime(next->type, next->spawnId, nullptr, true);
+            RemoveRespawnTime(next->type, next->spawnId, 0, nullptr, true);
             delete next;
         }
         else if (!next->respawnTime)
         { // just remove this respawn entry without rescheduling
             _respawnTimes.pop();
             GetRespawnMapForType(next->type).erase(next->spawnId);
-            RemoveRespawnTime(next->type, next->spawnId, nullptr, true);
+            RemoveRespawnTime(next->type, next->spawnId, 0, nullptr, true);
             delete next;
         }
         else
